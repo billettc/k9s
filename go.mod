@@ -48,4 +48,4 @@ require (
 	github.com/maoueh/zap-pretty v0.2.3-0.20210104192450-0c20b4b3ea0b
 )
 
-replace github.com/maoueh/zap-pretty => /Users/cbillett/devel/perso/zap-pretty
+replace github.com/maoueh/zap-pretty => github.com/billettc/zap-pretty
