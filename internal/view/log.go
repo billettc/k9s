@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	zappretty "github.com/maoueh/zap-pretty"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,7 +13,6 @@ import (
 	"time"
 
 	"github.com/atotto/clipboard"
-
 	"github.com/derailed/k9s/internal/client"
 	"github.com/derailed/k9s/internal/color"
 	"github.com/derailed/k9s/internal/config"
@@ -44,6 +44,7 @@ type Log struct {
 	indicator  *LogIndicator
 	ansiWriter io.Writer
 	model      *model.Log
+	processor *zappretty.Processor
 }
 
 var _ model.Component = (*Log)(nil)
@@ -125,8 +126,20 @@ func (l *Log) LogFailed(err error) {
 
 // LogChanged updates the logs.
 func (l *Log) LogChanged(lines [][]byte) {
+
+	var out [][]byte
+	for _, l := range lines {
+		pretty, err := zappretty.PrettyLine(string(l), true)
+		if err != nil {
+			out = append(out, l)
+			continue
+		}
+
+		out = append(out, []byte(pretty))
+	}
+
 	l.app.QueueUpdateDraw(func() {
-		l.Flush(lines)
+		l.Flush(out)
 	})
 }
 
