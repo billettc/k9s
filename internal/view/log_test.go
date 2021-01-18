@@ -22,7 +22,7 @@ func TestLog(t *testing.T) {
 	v.Flush(dao.LogItems{
 		dao.NewLogItemFromString("blee"),
 		dao.NewLogItemFromString("bozo"),
-	}.Lines(false))
+	}.Lines(false, ""))
 
 	assert.Equal(t, 29, len(v.Logs().GetText(true)))
 }
@@ -38,7 +38,7 @@ func BenchmarkLogFlush(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		v.Flush(items.Lines(false))
+		v.Flush(items.Lines(false, ""))
 	}
 }
 
@@ -64,7 +64,7 @@ func TestLogViewSave(t *testing.T) {
 	v.Flush(dao.LogItems{
 		dao.NewLogItemFromString("blee"),
 		dao.NewLogItemFromString("bozo"),
-	}.Lines(false))
+	}.Lines(false, ""))
 	config.K9sDumpDir = "/tmp"
 	dir := filepath.Join(config.K9sDumpDir, app.Config.K9s.CurrentCluster)
 	c1, _ := ioutil.ReadDir(dir)

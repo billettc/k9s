@@ -70,7 +70,7 @@ func TestLogItemsFilter(t *testing.T) {
 			for _, i := range ii {
 				i.Pod, i.Container = n, u.opts.Container
 			}
-			res, _, err := ii.Filter(u.q, false)
+			res, _, err := ii.Filter(u.q, false, "")
 			assert.Equal(t, u.err, err)
 			if err == nil {
 				assert.Equal(t, u.e, res)
@@ -119,7 +119,7 @@ func TestLogItemsRender(t *testing.T) {
 		ii[0].Pod, ii[0].Container = n, u.opts.Container
 		t.Run(k, func(t *testing.T) {
 			res := make([][]byte, 1)
-			ii.Render(u.opts.ShowTimestamp, res)
+			ii.Render(u.opts.ShowTimestamp, "", res)
 			assert.Equal(t, u.e, string(res[0]))
 		})
 	}
@@ -183,7 +183,7 @@ func TestLogItemRender(t *testing.T) {
 			_, n := client.Namespaced(u.opts.Path)
 			i.Pod, i.Container = n, u.opts.Container
 
-			assert.Equal(t, u.e, string(i.Render(0, u.opts.ShowTimestamp)))
+			assert.Equal(t, u.e, string(i.Render(0, u.opts.ShowTimestamp, "")))
 		})
 	}
 }
@@ -195,6 +195,6 @@ func BenchmarkLogItemRender(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 	for n := 0; n < b.N; n++ {
-		i.Render(0, true)
+		i.Render(0, true, "")
 	}
 }

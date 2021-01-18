@@ -22,6 +22,7 @@ type LogOptions struct {
 	SinceTime       string
 	SinceSeconds    int64
 	In, Out         string
+	LogModifierName string
 }
 
 // Info returns the option pod and container info.

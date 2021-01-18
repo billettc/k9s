@@ -17,6 +17,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
+	github.com/maoueh/zap-pretty v0.2.3-0.20210104192450-0c20b4b3ea0b
 	github.com/mattn/go-runewidth v0.0.9
 	github.com/openfaas/faas v0.0.0-20200207215241-6afae214e3ec
 	github.com/openfaas/faas-cli v0.0.0-20200124160744-30b7cec9634c
@@ -44,8 +45,6 @@ require (
 	k8s.io/metrics v0.18.8
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/yaml v1.2.0
-	vbom.ml/util v0.0.0-20180919145318-efcd4e0f9787 // indirect
-	github.com/maoueh/zap-pretty v0.2.3-0.20210104192450-0c20b4b3ea0b
 )
 
-replace github.com/maoueh/zap-pretty => github.com/billettc/zap-pretty
+replace github.com/maoueh/zap-pretty => github.com/billettc/zap-pretty v0.2.3-0.20210118120016-9f58160499bd

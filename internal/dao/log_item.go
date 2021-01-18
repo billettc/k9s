@@ -16,6 +16,12 @@ import (
 // LogChan represents a channel for logs.
 type LogChan chan *LogItem
 
+var logModifiers = map[string]LogModifier{}
+
+func RegisterLogModifier(name string, modifier LogModifier) {
+	logModifiers[name] = modifier
+}
+
 // LogItem represents a container log line.
 type LogItem struct {
 	Pod, Container, Timestamp string
@@ -80,7 +86,7 @@ var (
 )
 
 // Render returns a log line as string.
-func (l *LogItem) Render(paint int, showTime bool) []byte {
+func (l *LogItem) Render(paint int, showTime bool, modifier string) []byte {
 	bb := make([]byte, 0, 200)
 	if showTime {
 		t := l.Timestamp
@@ -100,7 +106,13 @@ func (l *LogItem) Render(paint int, showTime bool) []byte {
 		bb = append(bb, ' ')
 	}
 
-	return append(bb, escPattern.ReplaceAll(l.Bytes, matcher)...)
+	line := append(bb, escPattern.ReplaceAll(l.Bytes, matcher)...)
+
+	if logModifier := logModifiers[modifier]; logModifier != nil {
+		return logModifier.Modify(line)
+	}
+
+	return line
 }
 
 func colorFor(n string) int {
@@ -122,27 +134,27 @@ func colorFor(n string) int {
 type LogItems []*LogItem
 
 // Lines returns a collection of log lines.
-func (l LogItems) Lines(showTime bool) [][]byte {
+func (l LogItems) Lines(showTime bool, modifier string) [][]byte {
 	ll := make([][]byte, len(l))
 	for i, item := range l {
-		ll[i] = item.Render(0, showTime)
+		ll[i] = item.Render(0, showTime, modifier)
 	}
 
 	return ll
 }
 
 // StrLines returns a collection of log lines.
-func (l LogItems) StrLines(showTime bool) []string {
+func (l LogItems) StrLines(showTime bool, modifier string) []string {
 	ll := make([]string, len(l))
 	for i, item := range l {
-		ll[i] = string(item.Render(0, showTime))
+		ll[i] = string(item.Render(0, showTime, modifier))
 	}
 
 	return ll
 }
 
 // Render returns logs as a collection of strings.
-func (l LogItems) Render(showTime bool, ll [][]byte) {
+func (l LogItems) Render(showTime bool, modifier string, ll [][]byte) {
 	colors := make(map[string]int, len(l))
 	for i, item := range l {
 		info := item.ID()
@@ -151,7 +163,7 @@ func (l LogItems) Render(showTime bool, ll [][]byte) {
 			color = colorFor(info)
 			colors[info] = color
 		}
-		ll[i] = item.Render(color, showTime)
+		ll[i] = item.Render(color, showTime, modifier)
 	}
 }
 
@@ -164,15 +176,15 @@ func (l LogItems) DumpDebug(m string) {
 }
 
 // Filter filters out log items based on given filter.
-func (l LogItems) Filter(q string, showTime bool) ([]int, [][]int, error) {
+func (l LogItems) Filter(q string, showTime bool, modifier string) ([]int, [][]int, error) {
 	if q == "" {
 		return nil, nil, nil
 	}
 	if IsFuzzySelector(q) {
-		mm, ii := l.fuzzyFilter(strings.TrimSpace(q[2:]), showTime)
+		mm, ii := l.fuzzyFilter(strings.TrimSpace(q[2:]), showTime, modifier)
 		return mm, ii, nil
 	}
-	matches, indices, err := l.filterLogs(q, showTime)
+	matches, indices, err := l.filterLogs(q, showTime, modifier)
 	if err != nil {
 		log.Error().Err(err).Msgf("Logs filter failed")
 		return nil, nil, err
@@ -180,10 +192,10 @@ func (l LogItems) Filter(q string, showTime bool) ([]int, [][]int, error) {
 	return matches, indices, nil
 }
 
-func (l LogItems) fuzzyFilter(q string, showTime bool) ([]int, [][]int) {
+func (l LogItems) fuzzyFilter(q string, showTime bool, modifier string) ([]int, [][]int) {
 	q = strings.TrimSpace(q)
 	matches, indices := make([]int, 0, len(l)), make([][]int, 0, 10)
-	mm := fuzzy.Find(q, l.StrLines(showTime))
+	mm := fuzzy.Find(q, l.StrLines(showTime, modifier))
 	for _, m := range mm {
 		matches = append(matches, m.Index)
 		indices = append(indices, m.MatchedIndexes)
@@ -192,7 +204,7 @@ func (l LogItems) fuzzyFilter(q string, showTime bool) ([]int, [][]int) {
 	return matches, indices
 }
 
-func (l LogItems) filterLogs(q string, showTime bool) ([]int, [][]int, error) {
+func (l LogItems) filterLogs(q string, showTime bool, modifier string) ([]int, [][]int, error) {
 	var invert bool
 	if IsInverseSelector(q) {
 		invert = true
@@ -203,7 +215,7 @@ func (l LogItems) filterLogs(q string, showTime bool) ([]int, [][]int, error) {
 		return nil, nil, err
 	}
 	matches, indices := make([]int, 0, len(l)), make([][]int, 0, 10)
-	for i, line := range l.Lines(showTime) {
+	for i, line := range l.Lines(showTime, modifier) {
 		locs := rx.FindIndex(line)
 		if locs != nil && invert {
 			continue

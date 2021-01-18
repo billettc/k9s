@@ -106,7 +106,7 @@ func (l *Log) Clear() {
 func (l *Log) Refresh() {
 	l.fireLogCleared()
 	ll := make([][]byte, len(l.lines))
-	l.lines.Render(l.logOptions.ShowTimestamp, ll)
+	l.lines.Render(l.logOptions.ShowTimestamp, l.logOptions.LogModifierName, ll)
 	l.fireLogChanged(ll)
 }
 
@@ -144,7 +144,7 @@ func (l *Log) Set(items dao.LogItems) {
 
 	l.fireLogCleared()
 	ll := make([][]byte, len(l.lines))
-	l.lines.Render(l.logOptions.ShowTimestamp, ll)
+	l.lines.Render(l.logOptions.ShowTimestamp, l.logOptions.LogModifierName, ll)
 	l.fireLogChanged(ll)
 }
 
@@ -158,7 +158,7 @@ func (l *Log) ClearFilter() {
 
 	l.fireLogCleared()
 	ll := make([][]byte, len(l.lines))
-	l.lines.Render(l.logOptions.ShowTimestamp, ll)
+	l.lines.Render(l.logOptions.ShowTimestamp, l.logOptions.LogModifierName, ll)
 	l.fireLogChanged(ll)
 }
 
@@ -305,7 +305,7 @@ func (l *Log) applyFilter(q string) ([][]byte, error) {
 	if q == "" {
 		return nil, nil
 	}
-	matches, indices, err := l.lines.Filter(q, l.logOptions.ShowTimestamp)
+	matches, indices, err := l.lines.Filter(q, l.logOptions.ShowTimestamp, l.logOptions.LogModifierName)
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +313,7 @@ func (l *Log) applyFilter(q string) ([][]byte, error) {
 	// No filter!
 	if matches == nil {
 		ll := make([][]byte, len(l.lines))
-		l.lines.Render(l.logOptions.ShowTimestamp, ll)
+		l.lines.Render(l.logOptions.ShowTimestamp, l.logOptions.LogModifierName, ll)
 		return ll, nil
 	}
 	// Blank filter
@@ -321,7 +321,7 @@ func (l *Log) applyFilter(q string) ([][]byte, error) {
 		return nil, nil
 	}
 	filtered := make([][]byte, 0, len(matches))
-	lines := l.lines.Lines(l.logOptions.ShowTimestamp)
+	lines := l.lines.Lines(l.logOptions.ShowTimestamp, l.logOptions.LogModifierName)
 	for i, idx := range matches {
 		filtered = append(filtered, color.Highlight(lines[idx], indices[i], 209))
 	}
@@ -332,7 +332,7 @@ func (l *Log) applyFilter(q string) ([][]byte, error) {
 func (l *Log) fireLogBuffChanged(lines dao.LogItems) {
 	ll := make([][]byte, len(lines))
 	if l.filter == "" {
-		lines.Render(l.logOptions.ShowTimestamp, ll)
+		lines.Render(l.logOptions.ShowTimestamp, l.logOptions.LogModifierName, ll)
 	} else {
 		ff, err := l.applyFilter(l.filter)
 		if err != nil {

@@ -34,7 +34,7 @@ func TestLogFullBuffer(t *testing.T) {
 	assert.Equal(t, 1, v.dataCalled)
 	assert.Equal(t, 1, v.clearCalled)
 	assert.Equal(t, 0, v.errCalled)
-	assert.Equal(t, data[4:].Lines(false), v.data)
+	assert.Equal(t, data[4:].Lines(false, ""), v.data)
 }
 
 func TestLogFilter(t *testing.T) {
@@ -148,7 +148,7 @@ func TestLogBasic(t *testing.T) {
 	assert.Equal(t, 1, v.dataCalled)
 	assert.Equal(t, 1, v.clearCalled)
 	assert.Equal(t, 0, v.errCalled)
-	assert.Equal(t, data.Lines(false), v.data)
+	assert.Equal(t, data.Lines(false, ""), v.data)
 }
 
 func TestLogAppend(t *testing.T) {
@@ -161,7 +161,7 @@ func TestLogAppend(t *testing.T) {
 		dao.NewLogItemFromString("blah blah"),
 	}
 	m.Set(items)
-	assert.Equal(t, items.Lines(false), v.data)
+	assert.Equal(t, items.Lines(false, ""), v.data)
 
 	data := dao.LogItems{
 		dao.NewLogItemFromString("line1"),
@@ -171,13 +171,13 @@ func TestLogAppend(t *testing.T) {
 		m.Append(d)
 	}
 	assert.Equal(t, 1, v.dataCalled)
-	assert.Equal(t, items.Lines(false), v.data)
+	assert.Equal(t, items.Lines(false, ""), v.data)
 
 	m.Notify()
 	assert.Equal(t, 2, v.dataCalled)
 	assert.Equal(t, 1, v.clearCalled)
 	assert.Equal(t, 0, v.errCalled)
-	assert.Equal(t, append(items, data...).Lines(false), v.data)
+	assert.Equal(t, append(items, data...).Lines(false, ""), v.data)
 }
 
 func TestLogTimedout(t *testing.T) {

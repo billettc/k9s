@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	zappretty "github.com/maoueh/zap-pretty"
 	"io"
 	"os"
 	"path/filepath"
@@ -39,12 +38,12 @@ var invalidPathCharsRX = regexp.MustCompile(`[:/\\]+`)
 type Log struct {
 	*tview.Flex
 
-	app        *App
-	logs       *Logger
-	indicator  *LogIndicator
-	ansiWriter io.Writer
-	model      *model.Log
-	processor *zappretty.Processor
+	app         *App
+	logs        *Logger
+	indicator   *LogIndicator
+	ansiWriter  io.Writer
+	model       *model.Log
+	logModifier dao.LogModifier
 }
 
 var _ model.Component = (*Log)(nil)
@@ -55,7 +54,7 @@ func NewLog(gvr client.GVR, path, co string, prev bool) *Log {
 		Flex: tview.NewFlex(),
 		model: model.NewLog(
 			gvr,
-			buildLogOpts(path, co, prev, false, config.DefaultLoggerTailCount),
+			buildLogOpts(path, co, prev, false, config.DefaultLoggerTailCount, "zap-pretty"),
 			flushTimeout,
 		),
 	}
@@ -100,7 +99,6 @@ func (l *Log) Init(ctx context.Context) (err error) {
 	l.updateTitle()
 
 	l.model.ToggleShowTimestamp(l.app.Config.K9s.Logger.ShowTime)
-
 	return nil
 }
 
@@ -126,20 +124,8 @@ func (l *Log) LogFailed(err error) {
 
 // LogChanged updates the logs.
 func (l *Log) LogChanged(lines [][]byte) {
-
-	var out [][]byte
-	for _, l := range lines {
-		pretty, err := zappretty.PrettyLine(string(l), true)
-		if err != nil {
-			out = append(out, l)
-			continue
-		}
-
-		out = append(out, []byte(pretty))
-	}
-
 	l.app.QueueUpdateDraw(func() {
-		l.Flush(out)
+		l.Flush(lines)
 	})
 }
 
@@ -437,12 +423,13 @@ func (l *Log) goFullScreen() {
 // ----------------------------------------------------------------------------
 // Helpers...
 
-func buildLogOpts(path, co string, prevLogs, showTime bool, tailLineCount int) dao.LogOptions {
+func buildLogOpts(path, co string, prevLogs, showTime bool, tailLineCount int, logModifierName string) dao.LogOptions {
 	return dao.LogOptions{
-		Path:          path,
-		Container:     co,
-		Lines:         int64(tailLineCount),
-		Previous:      prevLogs,
-		ShowTimestamp: showTime,
+		Path:            path,
+		Container:       co,
+		Lines:           int64(tailLineCount),
+		Previous:        prevLogs,
+		ShowTimestamp:   showTime,
+		LogModifierName: logModifierName,
 	}
 }
